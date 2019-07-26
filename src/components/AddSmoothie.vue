@@ -6,6 +6,10 @@
         <label for="title">Smoothie title:</label>
         <input type="text" name="title" v-model="title">
       </div>
+      <div v-for="(ing, index) in ingredients">
+        <label for="ingredient">Ingredeient: </label>
+        <input type="text" name="ingredient" v-model="ingredients[index]">
+      </div>
       <div class="field add-ingredient">
         <label for="add-ingredient">Add an ingredient:</label>
         <input type="text" name="add-ingredient" @keydown.tab.prevent="addIng" v-model="another">
@@ -19,6 +23,9 @@
 </template>
 
 <script>
+  import db from '@/firebase/init'
+  import slugify from 'slugify'
+
   export default {
     name: 'AddSmoothie',
     data(){
@@ -26,12 +33,29 @@
         title: null,
         ingredients: [],
         another: null,
-        feedback: null
+        feedback: null,
+        slug: null
       }
     },
     methods: {
       addSmoothie(){
-        console.log(this.title, this.ingredients)
+        if (this.title) {
+          this.feedback = null
+          this.slug = slugify(this.title, {
+            replacement: '-',
+            remove: /[$*_+~.()'"!\-:@]/g,
+            lower: true
+          })
+          db.collection('smoothies').add({
+            title: this.title,
+            slug: this.slug,
+            ingredients: this.ingredients
+          }).then(()=>{
+            this.$router.push({name: 'Index'})
+          })
+        } else {
+          this.feedback = 'You must enter the smoothie title'
+        }
       },
       addIng() {
         if(this.another) {
